@@ -91,10 +91,10 @@ pub enum PacketWriteEndInfo {
 
 impl <T :io::Write> PacketWriter<T> {
 	pub fn new(wtr :T) -> Self {
-		return PacketWriter {
+		PacketWriter {
 			wtr : wtr,
 			page_vals : HashMap::new(),
-		};
+		}
 	}
 	pub fn into_inner(self) -> T {
 		self.wtr
@@ -277,7 +277,7 @@ impl <T :io::Write> PacketWriter<T> {
 		pg.pck_last_overflow_idx = pg.pck_this_overflow_idx;
 		pg.pck_this_overflow_idx = None;
 
-		return Ok(());
+		Ok(())
 	}
 }
 

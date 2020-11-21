@@ -41,13 +41,13 @@ pub enum OggReadError {
 
 impl OggReadError {
     fn description_str(&self) -> &str {
-        match self {
-			&OggReadError::NoCapturePatternFound => "No Ogg capture pattern found",
-			&OggReadError::InvalidStreamStructVer(_) =>
-				"A non zero stream structure version was passed",
-			&OggReadError::HashMismatch(_, _) => "CRC32 hash mismatch",
-			&OggReadError::ReadError(_) => "I/O error",
-			&OggReadError::InvalidData => "Constraint violated",
+        match *self {
+			OggReadError::NoCapturePatternFound => "No Ogg capture pattern found",
+			OggReadError::InvalidStreamStructVer(_) =>
+			   "A non zero stream structure version was passed",
+			OggReadError::HashMismatch(_, _) => "CRC32 hash mismatch",
+			OggReadError::ReadError(_) => "I/O error",
+			OggReadError::InvalidData => "Constraint violated",
 		}
     }
 }
@@ -58,8 +58,8 @@ impl error::Error for OggReadError {
 	}
 
 	fn cause(&self) -> Option<&error::Error> {
-		match self {
-			&OggReadError::ReadError(ref err) => Some(err as &error::Error),
+		match *self {
+			OggReadError::ReadError(ref err) => Some(err as &error::Error),
 			_ => None
 		}
 	}
@@ -73,7 +73,7 @@ impl Display for OggReadError {
 
 impl From<io::Error> for OggReadError {
 	fn from(err :io::Error) -> OggReadError {
-		return OggReadError::ReadError(err);
+		OggReadError::ReadError(err)
 	}
 }
 
@@ -120,15 +120,15 @@ impl PageInfo {
 	/// Returns `true` if the first "unread" packet is the first one
 	/// in the page, `false` otherwise.
 	fn is_first_pck_in_pg(&self) -> bool {
-		return self.packet_idx == 0;
+		self.packet_idx == 0
 	}
 	/// Returns `true` if the first "unread" packet is the last one
 	/// in the page, `false` otherwise.
 	/// If the first "unread" packet isn't completed in this page
 	/// (spans page borders), this returns `false`.
 	fn is_last_pck_in_pg(&self) -> bool {
-		return (self.packet_idx + 1 + (self.bi.ends_with_continued as u8)) as usize
-			== self.bi.packet_positions.len();
+		(self.packet_idx + 1 + (self.bi.ends_with_continued as u8)) as usize
+			== self.bi.packet_positions.len()
 	}
 }
 
@@ -404,7 +404,7 @@ impl BasePacketReader {
 			self.stream_with_stuff = None;
 		}
 
-		return Some(Packet {
+		Some(Packet {
 			data: packet_content,
 			first_packet_pg: first_pck_in_pg,
 			first_packet_stream: first_pck_overall,
@@ -412,7 +412,7 @@ impl BasePacketReader {
 			last_packet_stream: last_pck_overall,
 			absgp_page: pg_info.bi.absgp,
 			stream_serial: str_serial,
-		});
+		})
 	}
 
 	/// Pushes a given Ogg page, updating the internal structures
@@ -513,7 +513,7 @@ impl BasePacketReader {
 			self.stream_with_stuff = None;
 		}
 
-		return Ok(());
+		Ok(())
 	}
 
 	/// Reset the internal state after a seek
@@ -577,7 +577,7 @@ impl UntilPageHeaderReader {
 				_ => self.cpt_of = 0,
 			}
 		}
-		return None;
+		None
 	}
 	/// Do one read exactly, and if it was successful,
 	/// return Ok(true) if the full header has been read and can be extracted with
@@ -636,7 +636,7 @@ impl UntilPageHeaderReader {
 		let rd_buf = &buf[0 .. rd_len];
 
 		use std::cmp::min;
-		let (off, needed) = match self.mode.clone() {
+		let (off, needed) = match self.mode {
 			Searching => match self.check_arr(rd_buf) {
 				// Capture pattern found
 				Some(off) => {
@@ -664,26 +664,26 @@ impl UntilPageHeaderReader {
 		if fnd_buf.len() == needed {
 			// Capture pattern found!
 			self.mode = Found;
-			return Ok(Res::Found);
+			Ok(Res::Found)
 		} else if fnd_buf.len() < needed {
 			// We still have to read some content.
 			let needed_new = needed - copy_amount;
 			self.mode = FoundWithNeeded(needed_new as u8);
-			return Ok(Res::ReadNeeded);
+			Ok(Res::ReadNeeded)
 		} else {
 			// We have read too much content (exceeding the header).
 			// Seek back so that we are at the position
 			// right after the header.
 
 			self.mode = SeekNeeded(needed as i32 - fnd_buf.len() as i32);
-			return Ok(Res::SeekNeeded);
+			Ok(Res::SeekNeeded)
 		}
 	}
 	pub fn do_seek<S :Seek>(&mut self, mut skr :S)
 			-> Result<UntilPageHeaderResult, OggReadError> {
 		use self::UntilPageHeaderReaderMode::*;
 		use self::UntilPageHeaderResult as Res;
-		match self.mode.clone() {
+		match self.mode {
 			Searching | FoundWithNeeded(_) => Ok(Res::ReadNeeded),
 			SeekNeeded(offs) => {
 				tri!(skr.seek(SeekFrom::Current(offs as i64)));
@@ -814,7 +814,7 @@ impl<T :io::Read + io::Seek> PacketReader<T> {
 		let r = tri!(self.rdr.seek(pos));
 		// Reset the internal state
 		self.base_pck_rdr.update_after_seek();
-		return Ok(r);
+		Ok(r)
 	}
 
 	/// Seeks to absolute granule pos
@@ -1016,7 +1016,7 @@ fn seek_before_end<T :io::Read + io::Seek>(mut rdr :T,
 		offs :u64) -> Result<u64, OggReadError> {
 	let end_pos = tri!(rdr.seek(SeekFrom::End(0)));
 	let end_pos_to_seek = ::std::cmp::min(end_pos, offs);
-	return Ok(tri!(rdr.seek(SeekFrom::End(-(end_pos_to_seek as i64)))));
+	Ok(tri!(rdr.seek(SeekFrom::End(-(end_pos_to_seek as i64)))))
 }
 
 #[cfg(feature = "async")]
