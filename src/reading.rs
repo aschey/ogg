@@ -11,7 +11,7 @@ Reading logic
 
 use std::error;
 use std::io;
-use std::io::{Cursor, Read, Write, SeekFrom, Error, ErrorKind};
+use std::io::{Cursor, Write, SeekFrom, Error, ErrorKind};
 use byteorder::{ReadBytesExt, LittleEndian};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
@@ -19,7 +19,6 @@ use std::fmt::{Display, Formatter, Error as FmtError};
 use std::mem::replace;
 use crc::vorbis_crc32_update;
 use Packet;
-use std::io::Seek;
 
 /// Error that can be raised when decoding an Ogg transport.
 #[derive(Debug)]
@@ -537,13 +536,13 @@ consistent when it encounters the `WouldBlock` error kind.
 If you desire async functionality, consider enabling the `async` feature
 and look into the async module.
 */
-pub struct PacketReader<T :io::Read + io::Seek> {
+pub struct PacketReader<T :io::Read> {
 	rdr :T,
 
 	base_pck_rdr :BasePacketReader,
 }
 
-impl<T :io::Read + io::Seek> PacketReader<T> {
+impl<T :io::Read> PacketReader<T> {
 	/// Constructs a new `PacketReader` with a given `Read`.
 	pub fn new(rdr :T) -> PacketReader<T> {
 		PacketReader { rdr: rdr, base_pck_rdr : BasePacketReader::new() }
@@ -628,7 +627,9 @@ impl<T :io::Read + io::Seek> PacketReader<T> {
 
 		Ok(Some(tri!(pg_prs.parse_packet_data(packet_data))))
 	}
+}
 
+impl<T :io::Read + io::Seek> PacketReader<T> {
 	/// Seeks the underlying reader
 	///
 	/// Seeks the reader that this PacketReader bases on by the specified
