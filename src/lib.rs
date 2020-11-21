@@ -9,7 +9,7 @@
 #![forbid(unsafe_code)]
 
 // dynamic trait object without `dyn` keyword is deprecated since 1.27.
-#![allow(bare_trait_objects)]
+// #![allow(bare_trait_objects)]
 
 /*!
 Ogg container decoder and encoder
