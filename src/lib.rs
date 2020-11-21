@@ -8,6 +8,9 @@
 
 #![forbid(unsafe_code)]
 
+// dynamic trait object without `dyn` keyword is deprecated since 1.27.
+#![allow(bare_trait_objects)]
+
 /*!
 Ogg container decoder and encoder
 
@@ -26,6 +29,15 @@ extern crate bytes;
 
 #[cfg(test)]
 mod test;
+
+macro_rules! tri {
+    ($e:expr) => {
+        match $e {
+            Ok(val) => val,
+            Err(err) => return Err(err.into()),
+        }
+    };
+}
 
 mod crc;
 pub mod reading;
